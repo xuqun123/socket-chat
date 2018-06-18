@@ -24,18 +24,19 @@
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       $(function () {
-        var user;
-        do{
-          user = prompt("Please enter your nickname");
-        } while(user == null || user == "" );
-
         var socket = io();
-        var message;
-        $('form').submit(function(){
-          message = '<strong>' + user + ":</strong> " + $('#m').val();
-          socket.emit('chat message', message);
-          $("#messages").append($('<li>').html(message));
+        var username;
+        
+        do{
+          username = prompt("Please enter your nickname");
+        } while(username == null || username == "" );
 
+        
+        $('form').submit(function(){
+          socket.emit('add user', username);
+          socket.emit('chat message', $('#m').val());
+
+          $("#messages").append($('<li>').html('<strong>' + username + ":</strong> " + $('#m').val()));
           $('#m').val('');
           message = '';
           return false;

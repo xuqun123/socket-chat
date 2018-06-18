@@ -11,14 +11,18 @@ io.on('connection', function(socket){
   console.log('a user connected');
   io.emit('chat message', 'an user has been connected');
 
+  socket.on('add user', function(username) {
+    socket.username = username;
+  });
+
   socket.on('chat message', function(msg){
-    console.log('message: ' + msg);
-    socket.broadcast.emit('chat message', msg);
+    console.log('message: ' + msg + " (" + socket.username + ")");
+    socket.broadcast.emit('chat message', '<strong>' + socket.username + ":</strong> " + msg);
   });
 
   socket.on('disconnect', function(){
-    console.log('user disconnected');
-    io.emit('chat message', 'an user has been disconnected');
+    console.log('user disconnected' + " (" + socket.username + ")");
+    io.emit('chat message', 'an user has been disconnected' + " (" + socket.username + ")");
   });  
 });
 
