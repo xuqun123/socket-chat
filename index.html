@@ -42,8 +42,8 @@
           return false;
         });
 
-        socket.on('chat message', function(msg){
-          $('#messages').append($('<li>').html(msg));
+        socket.on('chat message', function(data){
+          $('#messages').append($('<li>').html('<strong>' + data.username + ":</strong> " + data.msg));
         });
       });
     </script>    
