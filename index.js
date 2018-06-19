@@ -8,8 +8,8 @@ app.get('/', function(req, res){
 });
 
 io.on('connection', function(socket){
-  console.log('a user connected');
-  io.emit('chat message', 'an user has been connected');
+  console.log('an user connected');
+  io.emit('connected', 'an user has been connected');
 
   socket.on('add user', function(username) {
     socket.username = username;
@@ -17,15 +17,15 @@ io.on('connection', function(socket){
 
   socket.on('chat message', function(msg){
     console.log('message: ' + msg + " (" + socket.username + ")");
-    socket.broadcast.emit('chat message', '<strong>' + socket.username + ":</strong> " + msg);
+    socket.broadcast.emit('chat message', {msg: msg, username: socket.username});
   });
 
   socket.on('disconnect', function(){
     console.log('user disconnected' + " (" + socket.username + ")");
-    io.emit('chat message', 'an user has been disconnected' + " (" + socket.username + ")");
+    io.emit('disconnected', 'an user has been disconnected' + " (" + socket.username + ")");
   });  
 });
 
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+http.listen(6001, function(){
+  console.log('listening on *:6001');
 });
