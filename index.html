@@ -25,13 +25,18 @@
 
     <div class='row'>
       <div id="rooms" class="col-md-4">
-        <ul id="rooms-list"></ul>        
+        <div class="text-center">
+          <ul id="rooms-list"></ul>
+          <div id="rooms-info"></div>        
+        </div>
       </div>    
 
       <div class="col-md-8" id='chat-box'>
         <ul id="messages"></ul>
         <form action="">
           <div class='input-group'>
+            <span id="username-badge" class="badge badge-dark" style="margin: 10px">
+            </span>
             <input id="m" autocomplete="off" class='form-control' style='margin-right: 20px'>
             <button class="btn btn-success">Send</button>
           </div>
@@ -52,6 +57,7 @@
           if (localStorage.getItem('username') && localStorage.getItem('email')) {
             username = localStorage.getItem('username');
             email = localStorage.getItem('email');
+            $("#username-badge").html(username + ':');
             $("#username-form").hide();
             socket.emit('add user', {username: username, email: email});
           }
@@ -61,6 +67,7 @@
           if ($('#username-input').prop('value') && $("#email-input").prop('value')) {
             username = $('#username-input').prop('value');
             email = $("#email-input").prop('value');
+            $("#username-badge").html(username + ':');            
             $("#username-form").fadeOut();
 
             if (typeof localStorage != undefined){
@@ -100,13 +107,17 @@
             console.log($(this).val());
             socket.emit('change room', $(this).val());
           });                    
-          
+
           console.log(data);
         });  
         
         socket.on('unauthenticated', function(msg){          
-          $("#rooms").append("<div class='label label-warning'>" + msg + "</div>");
+          $("#rooms").append("<div class='badge badge-warning'>" + msg + "</div><br/>");
         });
+
+        socket.on('room joined', function(room){          
+          $("#rooms-info").append("join room: <div class='badge badge-warning'>" + room + "</div><br/>");
+        });        
       });
     </script>    
   </body>

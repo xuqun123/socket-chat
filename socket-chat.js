@@ -28,6 +28,8 @@ io.on('connection', function(socket){
       socket.emit('authenticated', io.sockets.adapter.rooms);
     } else {
       socket.join(socket.room);
+      socket.emit('room joined', socket.room);
+
       console.log('username changed: ' + socket.username + " (" + socket.room + ")");      
       socket.to(adminSocket).emit('authenticated', io.sockets.adapter.rooms);
     }
@@ -44,6 +46,8 @@ io.on('connection', function(socket){
       socket.leave(socket.room);
       socket.room = room;
       socket.join(socket.room);
+      socket.emit('room joined', socket.room);
+
     } else {
       socket.emit('unauthenticated', 'Only admin can change room!');
     }
