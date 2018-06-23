@@ -10,6 +10,7 @@
       #rooms-list {list-style-type: none}
       #rooms-list li {margin-bottom: 10px}
       #chat-box {padding: 20px}
+      #username-form {margin-bottom: 50px}
     </style>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
   </head>
@@ -106,18 +107,24 @@
           $("#rooms-list button").click(function() {
             console.log($(this).val());
             socket.emit('change room', $(this).val());
-          });                    
+          });
 
           console.log(data);
         });  
         
         socket.on('unauthenticated', function(msg){          
-          $("#rooms").append("<div class='badge badge-warning'>" + msg + "</div><br/>");
+          $("#rooms").append("<div class='badge badge-error'>" + msg + "</div><br/>");
         });
 
         socket.on('room joined', function(room){          
           $("#rooms-info").append("join room: <div class='badge badge-warning'>" + room + "</div><br/>");
-        });        
+          $.get('http://localhost:8000/api/messages/' + encodeURIComponent(room), function(data){
+            console.log(data);
+            $.each(data, function(k, v){
+              $('#messages').append($('<li>').html('<strong>' + v['username'] + ":</strong> " + v['body']));
+            });
+          });          
+        });
       });
     </script>    
   </body>
