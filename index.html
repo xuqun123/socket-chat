@@ -113,12 +113,20 @@
         });  
         
         socket.on('unauthenticated', function(msg){          
-          $("#rooms").append("<div class='badge badge-error'>" + msg + "</div><br/>");
+          $("#rooms-info").append("<div class='badge badge-danger'>" + msg + "</div><br/>");
         });
 
-        socket.on('room joined', function(room){          
-          $("#rooms-info").append("join room: <div class='badge badge-warning'>" + room + "</div><br/>");
-          $.get('http://localhost:8000/api/messages/' + encodeURIComponent(room), function(data){
+        socket.on('admin online', function(msg){          
+          $("#rooms-info").append("<div class='badge badge-info'>" + msg + "</div><br/>");
+        });        
+
+        socket.on('room joined', function(data){
+          if (data.not_admin)
+            $("#rooms-info").append("<strong>" + data.username + "</strong> joins room: <div class='badge badge-warning'>" + data.room + "</div><br/>");
+          else
+            $("#rooms-info").append("join room: <div class='badge badge-warning'>" + data.room + "</div><br/>");
+
+          $.get('http://localhost:8000/api/messages/' + encodeURIComponent(data.room), function(data){
             console.log(data);
             $.each(data, function(k, v){
               $('#messages').append($('<li>').html('<strong>' + v['username'] + ":</strong> " + v['body']));

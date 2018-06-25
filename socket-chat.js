@@ -42,12 +42,17 @@ io.on('connection', function(socket){
       console.log('admin logged in: ' + socket.username + " (" + socket.room + ")");
       adminSocket = socket.id;
       socket.emit('authenticated', io.sockets.adapter.rooms);
+      socket.broadcast.emit('admin online', 'admin logged in');
     } else {
       socket.join(socket.room);
-      socket.emit('room joined', socket.room);
+      socket.emit('room joined', {username: socket.username, room: socket.room});
 
       console.log('username changed: ' + socket.username + " (" + socket.room + ")");      
-      socket.to(adminSocket).emit('authenticated', io.sockets.adapter.rooms);
+      if (adminSocket) {
+        socket.emit('admin online', 'admin logged in');
+        socket.to(adminSocket).emit('authenticated', io.sockets.adapter.rooms);
+        socket.to(adminSocket).emit('room joined', {username: socket.username, room: socket.room, not_admin: true});
+      }
     }
     console.log('admin socket: ' + adminSocket);
   });
@@ -55,15 +60,16 @@ io.on('connection', function(socket){
   socket.on('chat message', function(msg){
     console.log('message: ' + msg + " (" + socket.room + ': ' + socket.username + ')');
     socket.to(socket.room).emit('chat message', {msg: msg, username: socket.username});
-    console.log('INSERT INTO messages (body, room) VALUES ("' + msg + '", "' + socket.room + '");');
-    connection.query('INSERT INTO messages (username, email, body, is_admin, room, created_at) VALUES ("' 
+
+    var query = 'INSERT INTO messages (username, email, body, is_admin, room, created_at) VALUES ("' 
                       + socket.username + '", "' + socket.email + '", "'  
                       + msg + '", "' + (socket.admin === true ? 1 : 0) + '", "' 
-                      + socket.room + '", "' +  moment().utc().format('YYYY-MM-DD HH:mm:ss') + '");',
-                      function (error, rows) {
-      if (error) throw error;
-      console.log(rows);
-    });    
+                      + socket.room + '", "' +  moment().utc().format('YYYY-MM-DD HH:mm:ss') + '");';
+    console.log(query);
+    connection.query(query,  function (error, rows) {
+      if (error)
+        console.log(error);
+    });
   });
 
   socket.on('change room', function(room){
@@ -71,8 +77,7 @@ io.on('connection', function(socket){
       socket.leave(socket.room);
       socket.room = room;
       socket.join(socket.room);
-      socket.emit('room joined', socket.room);
-
+      socket.emit('room joined', {username: socket.username, room: socket.room});
     } else {
       socket.emit('unauthenticated', 'Only admin can change room!');
     }
