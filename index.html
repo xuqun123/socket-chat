@@ -34,6 +34,8 @@
 
       <div class="col-md-8" id='chat-box'>
         <ul id="messages"></ul>
+        <div class='text-center mb-2' id='typing-info'>
+        </div>
         <form action="">
           <div class='input-group'>
             <span id="username-badge" class="badge badge-dark" style="margin: 10px">
@@ -81,10 +83,22 @@
             $('#email-input').css('border-color', 'red');
           } 
         });
+
+        $("#m").keypress(function() {
+          $("#typing-info").html("<div class='badge badge-info'>" + username + " is typing ...</div>");
+          socket.emit('typing', username + ' is typing ...');
+        });        
+
+        $("#m").blur(function() {
+          $("#typing-info").html("");
+          socket.emit('typing stopped', username + ' stopped typing');
+        });                
       
         $('form').submit(function(){
           socket.emit('chat message', $('#m').val());
+          socket.emit('typing stopped', username + ' stopped typing');
 
+          $("#typing-info").html("");
           $("#messages").append($('<li>').html('<strong>' + username + ":</strong> " + $('#m').val()));
           $('#m').val('');
           message = '';
@@ -121,18 +135,26 @@
         });        
 
         socket.on('room joined', function(data){
-          if (data.not_admin)
-            $("#rooms-info").append("<strong>" + data.username + "</strong> joins room: <div class='badge badge-warning'>" + data.room + "</div><br/>");
-          else
-            $("#rooms-info").append("join room: <div class='badge badge-warning'>" + data.room + "</div><br/>");
-
+          $("#rooms-info").append("<strong>" + data.username + "</strong> joined in: <div class='badge badge-warning'>" + data.room + "</div><br/>");
           $.get('http://localhost:8000/api/messages/' + encodeURIComponent(data.room), function(data){
-            console.log(data);
+            $('#messages').html('');
             $.each(data, function(k, v){
               $('#messages').append($('<li>').html('<strong>' + v['username'] + ":</strong> " + v['body']));
             });
           });          
         });
+
+        socket.on('room left', function(data){
+          $("#rooms-info").append("<strong>" + data.username + "</strong> left the room: <div class='badge badge-warning'>" + data.room + "</div><br/>");
+        }); 
+
+        socket.on('typing', function(msg){
+          $("#typing-info").html("<div class='badge badge-info'>" + msg + "</div>");
+        });
+
+        socket.on('typing stopped', function(msg){
+          $("#typing-info").html('');
+        });               
       });
     </script>    
   </body>
