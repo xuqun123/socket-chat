@@ -134,6 +134,10 @@
           $("#rooms-info").append("<div class='badge badge-info'>" + msg + "</div><br/>");
         });        
 
+        socket.on('admin offline', function(msg){          
+          $("#rooms-info").append("<div class='badge badge-danger'>" + msg + "</div><br/>");
+        });                
+
         socket.on('room joined', function(data){
           $("#rooms-info").append("<strong>" + data.username + "</strong> joined in: <div class='badge badge-warning'>" + data.room + "</div><br/>");
           $.get('http://localhost:8000/api/messages/' + encodeURIComponent(data.room), function(data){

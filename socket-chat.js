@@ -3,22 +3,24 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var moment = require('moment');
+require('dotenv').config();
 
 //connect to DB
 var mysql = require('mysql')
 var connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'quintin',
-  password: 'xuqun0630',
-  database: 'portfolio'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  charset : 'utf8mb4'
 });
 connection.connect(function(err) {
-  if (err) throw err;
+  if (err) 
+    console.log(err);
   console.log('You are now connected to DB...');
 });
 
 app.get('/socket.io', function(req, res){
-  // res.send('<h1>Hello world</h1>');
   res.sendFile(__dirname + '/index.html');
 });
 
@@ -26,7 +28,7 @@ app.get('/socket.io', function(req, res){
 var adminSocket;
 io.on('connection', function(socket){
   socket.username = 'anonymous_' + socket.id;
-  socket.room = 'room_' + socket.username;
+  socket.room = 'room##' + socket.username;
   socket.admin = false;
 
   console.log('an user connected: ' + socket.id);
@@ -37,7 +39,7 @@ io.on('connection', function(socket){
     socket.email = data.email;
     socket.room = 'room##' + data.username + '##' + data.email;    
 
-    if (data.username === 'admin' && data.email === 'lele') {
+    if (data.username === process.env.ADMIN_USERNAME && data.email === process.env.ADMIN_EMAIL) {
       socket.admin = true;
       console.log('admin logged in: ' + socket.username + " (" + socket.room + ")");
       adminSocket = socket.id;
@@ -47,14 +49,14 @@ io.on('connection', function(socket){
       socket.join(socket.room);
       socket.emit('room joined', {username: socket.username, room: socket.room});
 
-      console.log('username changed: ' + socket.username + " (" + socket.room + ")");      
-      if (adminSocket) {
+      console.log('general user logged in: ' + socket.username + " (" + socket.room + ")");      
+      if (adminSocket != null && adminSocket != undefined) {
         socket.emit('admin online', 'Quintin is online');
         socket.to(adminSocket).emit('authenticated', io.sockets.adapter.rooms);
         socket.to(adminSocket).emit('room joined', {username: socket.username, room: socket.room});
       }
     }
-    console.log('admin socket: ' + adminSocket);
+    // console.log('admin socket: ' + adminSocket);
   });
 
   socket.on('chat message', function(msg){
@@ -93,10 +95,15 @@ io.on('connection', function(socket){
   });
 
   socket.on('disconnect', function(){
-    socket.to(socket.room).emit('room left', {username: socket.username, room: socket.room});
-    socket.to(adminSocket).emit('room left', {username: socket.username, room: socket.room});
-    console.log('user disconnected' + " (" + socket.username + ")");
-    io.emit('disconnected', socket.username + ' has been disconnected: ');
+    if (socket.id === adminSocket) {
+      console.log('admin disconnected: ' + socket.username + " (" + socket.room +  ")");
+      adminSocket = null;
+      socket.broadcast.emit('admin offline', 'Quintin is offline');
+    } else {
+      console.log('user disconnected: ' + socket.username + " (" + socket.room +  ")");
+      socket.to(socket.room).emit('room left', {username: socket.username, room: socket.room});
+      socket.to(adminSocket).emit('room left', {username: socket.username, room: socket.room});
+    }    
   });  
 
   socket.on('typing', function(msg){
