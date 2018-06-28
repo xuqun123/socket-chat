@@ -32,7 +32,7 @@ io.on('connection', function(socket){
   socket.admin = false;
 
   console.log('an user connected: ' + socket.id);
-  io.emit('connected', socket.username + 'has been connected');
+  socket.to(adminSocket).emit('connected', socket.id + ' is connected');
 
   socket.on('add user', function(data) {
     socket.username = data.username;
@@ -44,29 +44,30 @@ io.on('connection', function(socket){
       console.log('admin logged in: ' + socket.username + " (" + socket.room + ")");
       adminSocket = socket.id;
       socket.emit('authenticated', io.sockets.adapter.rooms);
-      socket.broadcast.emit('admin online', 'Quintin is online');
+      io.emit('admin online', 'Quintin is online');
     } else {
       socket.join(socket.room);
       socket.emit('room joined', {username: socket.username, room: socket.room});
 
       console.log('general user logged in: ' + socket.username + " (" + socket.room + ")");      
       if (adminSocket != null && adminSocket != undefined) {
-        socket.emit('admin online', 'Quintin is online');
+        io.emit('admin online', 'Quintin is online');
         socket.to(adminSocket).emit('authenticated', io.sockets.adapter.rooms);
-        socket.to(adminSocket).emit('room joined', {username: socket.username, room: socket.room});
+        socket.to(adminSocket).emit('room joined', {username: socket.username, room: socket.room, info_only: true});
       }
     }
     // console.log('admin socket: ' + adminSocket);
   });
 
   socket.on('chat message', function(msg){
+    var chatTime = moment().utc().format('YYYY-MM-DD HH:mm:ss');
     console.log('message: ' + msg + " (" + socket.room + ': ' + socket.username + ')');
-    socket.to(socket.room).emit('chat message', {msg: msg, username: socket.username});
+    socket.to(socket.room).emit('chat message', {msg: msg, username: socket.username, created_at: chatTime, is_admin: socket.admin === true ? 1 : 0});
 
     var query = 'INSERT INTO messages (username, email, body, is_admin, room, created_at) VALUES ("' 
                       + socket.username + '", "' + socket.email + '", "'  
                       + msg + '", "' + (socket.admin === true ? 1 : 0) + '", "' 
-                      + socket.room + '", "' +  moment().utc().format('YYYY-MM-DD HH:mm:ss') + '");';
+                      + socket.room + '", "' +  chatTime + '");';
     console.log(query);
     connection.query(query,  function (error, rows) {
       if (error)
@@ -84,7 +85,7 @@ io.on('connection', function(socket){
       socket.room = room;
 
       socket.join(socket.room);
-      socket.to(socket.room).emit('room joined', {username: socket.username, room: socket.room});
+      socket.to(socket.room).emit('room joined', {username: socket.username, room: socket.room, info_only: true});
       socket.emit('room joined', {username: socket.username, room: socket.room});
 
       console.log('admin changed room to: ' + socket.room);
@@ -98,6 +99,7 @@ io.on('connection', function(socket){
     if (socket.id === adminSocket) {
       console.log('admin disconnected: ' + socket.username + " (" + socket.room +  ")");
       adminSocket = null;
+      socket.to(socket.room).emit('room left', {username: socket.username, room: socket.room, info_only: true});
       socket.broadcast.emit('admin offline', 'Quintin is offline');
     } else {
       console.log('user disconnected: ' + socket.username + " (" + socket.room +  ")");

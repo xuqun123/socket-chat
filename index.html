@@ -140,12 +140,14 @@
 
         socket.on('room joined', function(data){
           $("#rooms-info").append("<strong>" + data.username + "</strong> joined in: <div class='badge badge-warning'>" + data.room + "</div><br/>");
-          $.get('http://localhost:8000/api/messages/' + encodeURIComponent(data.room), function(data){
-            $('#messages').html('');
-            $.each(data, function(k, v){
-              $('#messages').append($('<li>').html('<strong>' + v['username'] + ":</strong> " + v['body']));
-            });
-          });          
+          if (data.info_only != true) {
+            $.get('http://localhost:8000/api/messages/' + encodeURIComponent(data.room), function(data){
+              $('#messages').html('');
+              $.each(data, function(k, v){
+                $('#messages').append($('<li>').html('<strong>' + v['username'] + ":</strong> " + v['body']));
+              });
+            });          
+          }
         });
 
         socket.on('room left', function(data){
