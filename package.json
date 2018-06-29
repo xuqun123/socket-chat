@@ -7,6 +7,8 @@
     "express": "^4.15.2",
     "moment": "^2.22.2",
     "mysql": "^2.15.0",
-    "socket.io": "^2.1.1"
+    "socket.io": "^2.1.1",
+    "socket.io-file": "^2.0.2",
+    "socket.io-file-client": "^2.0.2"
   }
 }

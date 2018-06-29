@@ -41,6 +41,7 @@
             <span id="username-badge" class="badge badge-dark" style="margin: 10px">
             </span>
             <input id="m" autocomplete="off" class='form-control' style='margin-right: 20px'>
+            <input type="file" id="file" multiple>
             <button class="btn btn-success">Send</button>
           </div>
         </div>
@@ -49,13 +50,33 @@
     </div>    
   
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/socket.io-file-client.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       $(function () {
         var socket = io();
+        var uploader = new SocketIOFileClient(socket);
         var username = '';
         var email = '';
 
+        var form = document.getElementById('form');
+         
+        uploader.on('start', function(fileInfo) {
+            console.log('Start uploading', fileInfo);
+        });
+        uploader.on('stream', function(fileInfo) {
+            console.log('Streaming... sent ' + fileInfo.sent + ' bytes.');
+        });
+        uploader.on('complete', function(fileInfo) {
+            console.log('Upload Complete', fileInfo);
+        });
+        uploader.on('error', function(err) {
+            console.log('Error!', err);
+        });
+        uploader.on('abort', function(fileInfo) {
+            console.log('Aborted: ', fileInfo);
+        });
+         
         if (typeof localStorage != undefined) {
           if (localStorage.getItem('username') && localStorage.getItem('email')) {
             username = localStorage.getItem('username');
@@ -102,6 +123,12 @@
           $("#messages").append($('<li>').html('<strong>' + username + ":</strong> " + $('#m').val()));
           $('#m').val('');
           message = '';
+
+          var fileEl = document.getElementById('file');
+          var uploadIds = uploader.upload(fileEl, {
+              data: { /* Arbitrary data... */ }
+          });
+
           return false;
         });
 
@@ -160,7 +187,12 @@
 
         socket.on('typing stopped', function(msg){
           $("#typing-info").html('');
-        });               
+        });   
+
+        socket.on('upload completed', function(data){
+          $('#messages').append($('<li>').html('<img src="' + data['uploadDir'] + '">'));
+        });
+
       });
     </script>    
   </body>
