@@ -115,6 +115,22 @@ io.on('connection', function(socket){
   socket.on('typing stopped', function(msg){
     socket.to(socket.room).emit('typing stopped', msg);    
   });
+
+  socket.on('image upload', function(url){
+    var chatTime = moment().utc().format('YYYY-MM-DD HH:mm:ss');
+    console.log('image uploaded: ' + url + " (" + socket.room + ': ' + socket.username + ')');
+    socket.to(socket.room).emit('image upload', {image_url: url, username: socket.username, created_at: chatTime, is_admin: socket.admin === true ? 1 : 0});
+
+    var query = 'INSERT INTO messages (username, email, body, is_admin, room, created_at, is_image) VALUES ("' 
+                      + socket.username + '", "' + socket.email + '", "'  
+                      + url + '", "' + (socket.admin === true ? 1 : 0) + '", "' 
+                      + socket.room + '", "' +  chatTime + '", 1);';
+    console.log(query);
+    connection.query(query,  function (error, rows) {
+      if (error)
+        console.log(error);
+    });
+  });  
 });
 
 http.listen(6001, function(){
