@@ -106,6 +106,15 @@ io.on('connection', function(socket){
       socket.to(socket.room).emit('room left', {username: socket.username, room: socket.room});
       socket.to(adminSocket).emit('room left', {username: socket.username, room: socket.room});
     }    
+
+    var request=require('request');
+    request.get('http://' + process.env.LARAVEL_HOST + '/api/messages/notify/' + encodeURIComponent(socket.room), function(err,res,body){
+      if(res.statusCode !== 200){
+        console.log('invoke messages notify API fail for ' + socket.room + ' (' + err + ')');
+      } else {
+        console.log('invoke messages notify API successfully for ' + socket.room);
+      }
+    });
   });  
 
   socket.on('typing', function(msg){
