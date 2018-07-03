@@ -105,6 +105,7 @@ io.on('connection', function(socket){
       console.log('user disconnected: ' + socket.username + " (" + socket.room +  ")");
       socket.to(socket.room).emit('room left', {username: socket.username, room: socket.room});
       socket.to(adminSocket).emit('room left', {username: socket.username, room: socket.room});
+      socket.to(adminSocket).emit('authenticated', io.sockets.adapter.rooms);
     }    
 
     var request=require('request');
